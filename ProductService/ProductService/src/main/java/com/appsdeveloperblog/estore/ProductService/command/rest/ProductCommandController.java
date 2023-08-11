@@ -2,6 +2,8 @@ package com.appsdeveloperblog.estore.ProductService.command.rest;
 
 import java.util.UUID;
 
+import javax.validation.Valid;
+
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -29,7 +31,7 @@ public class ProductCommandController {
 	}
 	
 	@PostMapping
-	public String createProduct(@RequestBody CreateProductRestModel createProductRestModel) {
+	public String createProduct(@Valid @RequestBody CreateProductRestModel createProductRestModel) {
 		
 		CreateProductCommand createProductCommand = CreateProductCommand.builder()
 		.price(createProductRestModel.getPrice())
