@@ -11,12 +11,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.appsdeveloperblog.estore.ProductService.command.CreateProductCommand;
+import com.appsdeveloperblog.estore.ProductService.core.data.ProductLookupEntity;
+import com.appsdeveloperblog.estore.ProductService.core.data.ProductLookupRepository;
 
 @Component
 public class CreateProductCommandInterceptor implements MessageDispatchInterceptor<CommandMessage<?>> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger((CreateProductCommandInterceptor.class));
+	private final ProductLookupRepository productLookupRepository;
 	
+	public CreateProductCommandInterceptor(ProductLookupRepository productLookupRepository) {
+		this.productLookupRepository = productLookupRepository;
+	}
+	 
 	@Override
 	public BiFunction<Integer, CommandMessage<?>, CommandMessage<?>> handle(
 			List<? extends CommandMessage<?>> messages) {
@@ -36,6 +43,17 @@ public class CreateProductCommandInterceptor implements MessageDispatchIntercept
 						|| createProductCommand.getTitle().isBlank()) {
 					throw new IllegalArgumentException("Title cannot be empty");
 				}
+				
+				ProductLookupEntity productLookupEntity =
+						productLookupRepository.findByProductIdOrTitle(createProductCommand.getProductId(), createProductCommand.getTitle());
+				
+				if(productLookupEntity != null) {
+					throw new IllegalStateException(
+							String.format("Product with productId %s or title %s already exists", 
+									createProductCommand.getProductId(), createProductCommand.getTitle())
+							);
+				}
+				
 			}
 			return command;
 		};

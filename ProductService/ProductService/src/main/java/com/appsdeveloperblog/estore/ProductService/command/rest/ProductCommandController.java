@@ -53,12 +53,12 @@ public class ProductCommandController {
 	
 	@PutMapping
 	public String updateProduct() {
-		return "HTTP PUT Handled";
+		return "HTTP PUT Handled, Port No: " + environment.getProperty("local.server.port");
 	}
 	
 	@DeleteMapping
 	public String deleteProduct() {
-		return "HTTP DELETE Handled";
+		return "HTTP DELETE Handled, Port No: " + environment.getProperty("local.server.port");
 	}
 	
 }
