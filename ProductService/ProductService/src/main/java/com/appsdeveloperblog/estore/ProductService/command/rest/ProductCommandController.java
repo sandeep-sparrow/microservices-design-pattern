@@ -48,7 +48,7 @@ public class ProductCommandController {
 		}
 		
 		// return "HTTP POST Handled " + createProductCommand.getTitle();
-		return "Product Id: " + returnValue + "Port No: " + environment.getProperty("local.server.port");
+		return "Product Id: " + returnValue + " Port No: " + environment.getProperty("local.server.port");
 	}
 	
 	@PutMapping

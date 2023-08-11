@@ -4,14 +4,12 @@ import java.math.BigDecimal;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 
 import lombok.Data;
 
 @Data
 public class CreateProductRestModel {
 	
-	@NotBlank(message = "Product title is a required field")
 	private String title;
 	
 	@Min(value = 1, message = "Price cannot be lower than 1")
