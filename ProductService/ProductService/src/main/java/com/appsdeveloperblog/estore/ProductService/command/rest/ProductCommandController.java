@@ -41,13 +41,16 @@ public class ProductCommandController {
 		
 		String returnValue;
 		
-		try {
-			returnValue = commandGateway.sendAndWait(createProductCommand);
-		}catch (Exception e) {
-			returnValue = e.getLocalizedMessage();
-		}
+		returnValue = commandGateway.sendAndWait(createProductCommand);
 		
-		// return "HTTP POST Handled " + createProductCommand.getTitle();
+//		try {
+//			returnValue = commandGateway.sendAndWait(createProductCommand);
+//		}catch (Exception e) {
+//			returnValue = e.getLocalizedMessage();
+//		}
+		
+//      return "HTTP POST Handled " + createProductCommand.getTitle();
+		
 		return "Product Id: " + returnValue + " Port No: " + environment.getProperty("local.server.port");
 	}
 	
