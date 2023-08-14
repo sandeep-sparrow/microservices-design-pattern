@@ -44,6 +44,7 @@ public class OrderSaga {
 					CommandResultMessage<? extends Object> commandResultMessage) {
 				if(commandResultMessage.isExceptional()) {
 					// start a compensating transaction
+					System.out.println(commandResultMessage.exceptionResult());
 				}
 			}
 		});
