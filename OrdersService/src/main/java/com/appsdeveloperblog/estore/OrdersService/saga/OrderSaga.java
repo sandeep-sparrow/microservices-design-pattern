@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
 import com.appsdeveloperblog.estore.core.commands.ReserveProductCommand;
-import com.appsdeveloperblog.estore.core.errorhandling.ErrorMessage;
 import com.appsdeveloperblog.estore.core.events.ProductReservedEvent;
 
 @Saga
