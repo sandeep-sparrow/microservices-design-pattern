@@ -10,6 +10,8 @@ import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.beans.BeanUtils;
 
 import com.appsdeveloperblog.estore.ProductService.core.events.ProductCreatedEvent;
+import com.appsdeveloperblog.estore.core.commands.ReserveProductCommand;
+import com.appsdeveloperblog.estore.core.events.ProductReservedEvent;
 
 import lombok.Data;
 
@@ -48,6 +50,23 @@ public class ProductAggregate {
 		// if(true) throw new Exception("An Error took place in the CreateProductCommand @CommandHandler method");
 	}
 	
+	@CommandHandler
+	public void handle(ReserveProductCommand reserveProductCommand) {
+		
+		if(quantity < reserveProductCommand.getQuantity()) {
+			throw new IllegalArgumentException("Insufficient number of item in stock");
+		}
+		
+		ProductReservedEvent productReservedEvent = ProductReservedEvent.builder()
+				.orderId(reserveProductCommand.getOrderId())
+				.productId(reserveProductCommand.getProductId())
+				.quantity(reserveProductCommand.getQuantity())
+				.userId(reserveProductCommand.getUserId())
+				.build();
+		
+		AggregateLifecycle.apply(productReservedEvent);
+	}
+	
 	@EventSourcingHandler
 	public void on(ProductCreatedEvent productCreatedEvent) {
 		
@@ -55,6 +74,13 @@ public class ProductAggregate {
 		this.price = productCreatedEvent.getPrice();
 		this.title = productCreatedEvent.getTitle();
 		this.quantity = productCreatedEvent.getQuantity();
+	}
+	
+	
+	@EventSourcingHandler
+	public void on(ProductReservedEvent productReservedEvent) {
+		
+		this.quantity -= productReservedEvent.getQuantity();
 	}
 
 }
