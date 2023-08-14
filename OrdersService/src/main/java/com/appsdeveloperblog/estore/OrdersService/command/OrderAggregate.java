@@ -36,7 +36,7 @@ public class OrderAggregate {
 			throw new IllegalStateException("Product Id cannot be empty");
 		}
 		if(createOrderCommand.getAddressId() == null) {
-			throw new IllegalStateException("Product Id cannot be empty");
+			throw new IllegalStateException("Address Id cannot be empty");
 		}
 		
 		OrderCreatedEvent orderCreatedEvent = new OrderCreatedEvent();
