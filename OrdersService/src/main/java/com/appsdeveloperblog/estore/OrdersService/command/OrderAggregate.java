@@ -31,10 +31,20 @@ public class OrderAggregate {
 	@CommandHandler
 	public OrderAggregate(CreateOrderCommand createOrderCommand) {
 		
+		// validate create order command
+				if(createOrderCommand.getProductId() == null) {
+			throw new IllegalStateException("Product Id cannot be empty");
+		}
+		if(createOrderCommand.getAddressId() == null) {
+			throw new IllegalStateException("Product Id cannot be empty");
+		}
+		
 		OrderCreatedEvent orderCreatedEvent = new OrderCreatedEvent();
 		BeanUtils.copyProperties(createOrderCommand, orderCreatedEvent);
 		
 		AggregateLifecycle.apply(orderCreatedEvent);
+		
+		// if(true) throw new Exception("An Error took place in the CreateOrderCommand @CommandHandler method");
 	}
 	
 	@EventSourcingHandler
