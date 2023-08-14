@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
 import com.appsdeveloperblog.estore.core.commands.ReserveProductCommand;
+import com.appsdeveloperblog.estore.core.errorhandling.ErrorMessage;
 import com.appsdeveloperblog.estore.core.events.ProductReservedEvent;
 
 @Saga
@@ -44,6 +45,7 @@ public class OrderSaga {
 					CommandResultMessage<? extends Object> commandResultMessage) {
 				if(commandResultMessage.isExceptional()) {
 					// start a compensating transaction
+					System.out.println(commandResultMessage.exceptionResult());
 				}
 			}
 		});

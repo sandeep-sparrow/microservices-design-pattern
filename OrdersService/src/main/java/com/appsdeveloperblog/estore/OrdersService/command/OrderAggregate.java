@@ -29,13 +29,13 @@ public class OrderAggregate {
 	}
 	
 	@CommandHandler
-	public OrderAggregate(CreateOrderCommand createOrderCommand) {
+	public OrderAggregate(CreateOrderCommand createOrderCommand) throws Exception{
 		
 		// validate create order command
-				if(createOrderCommand.getProductId() == null) {
+		if(createOrderCommand.getProductId().isEmpty()) {
 			throw new IllegalStateException("Product Id cannot be empty");
 		}
-		if(createOrderCommand.getAddressId() == null) {
+		if(createOrderCommand.getAddressId().isEmpty()) {
 			throw new IllegalStateException("Address Id cannot be empty");
 		}
 		
