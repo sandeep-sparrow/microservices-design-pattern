@@ -32,7 +32,6 @@ public class OrderEventsHandler {
 		}catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 }
