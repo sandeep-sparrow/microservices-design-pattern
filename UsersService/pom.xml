@@ -9,23 +9,33 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.appsdeveloperblog.estore</groupId>
-	<artifactId>ProductService</artifactId>
+	<artifactId>UsersService</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ProductService</name>
+	<name>UsersService</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.axonframework/axon-spring-boot-starter -->
+		<dependency>
+		    <groupId>org.axonframework</groupId>
+		    <artifactId>axon-spring-boot-starter</artifactId>
+		    <version>4.8.0</version>
+	    </dependency>
+	    <dependency>
+			<groupId>com.appsdeveloperblog.estore</groupId>
+			<artifactId>core</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
