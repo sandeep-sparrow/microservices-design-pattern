@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.appsdeveloperblog.estore.OrdersService.core.data.OrderEntity;
 import com.appsdeveloperblog.estore.OrdersService.core.data.OrdersRepository;
+import com.appsdeveloperblog.estore.OrdersService.core.event.OrderApprovedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
 
 @Component
@@ -25,13 +26,32 @@ public class OrderEventsHandler {
 		OrderEntity orderEntity = new OrderEntity();
 		BeanUtils.copyProperties(event, orderEntity);
 		
-		System.out.println("Saving Order Event - Entity to H2 Database");
+		System.out.println("Saving Order Created Event - Entity to H2 Database");
 		
 		try {
 			ordersRepository.save(orderEntity);
 		}catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@EventHandler
+	public void on(OrderApprovedEvent event) {
+		
+		OrderEntity orderEntity = new OrderEntity();
+		
+		// fetch the existing order
+		orderEntity = ordersRepository.findByOrderId(event.getOrderId());
+		
+		if(orderEntity == null) {
+			// TODO: Do something about it
+			return;
+		}
+		
+		orderEntity.setOrderStatus(event.getOrderStatus());
+		
+		System.out.println("Updating Order Approved event - Entity to H2 Database");
+		ordersRepository.save(orderEntity);
 	}
 	
 }

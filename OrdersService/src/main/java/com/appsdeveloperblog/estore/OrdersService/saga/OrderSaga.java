@@ -8,7 +8,9 @@ import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.CommandResultMessage;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
+import org.axonframework.modelling.saga.EndSaga;
 import org.axonframework.modelling.saga.SagaEventHandler;
+import org.axonframework.modelling.saga.SagaLifecycle;
 import org.axonframework.modelling.saga.StartSaga;
 import org.axonframework.queryhandling.QueryGateway;
 import org.axonframework.spring.stereotype.Saga;
@@ -16,9 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.appsdeveloperblog.estore.OrdersService.command.commands.ApproveOrderCommand;
+import com.appsdeveloperblog.estore.OrdersService.core.event.OrderApprovedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
 import com.appsdeveloperblog.estore.core.commands.ProcessPaymentCommand;
 import com.appsdeveloperblog.estore.core.commands.ReserveProductCommand;
+import com.appsdeveloperblog.estore.core.events.PaymentProcessEvent;
 import com.appsdeveloperblog.estore.core.events.ProductReservedEvent;
 import com.appsdeveloperblog.estore.core.model.User;
 import com.appsdeveloperblog.estore.core.query.FetchUserPaymentDetailsQuery;
@@ -108,6 +113,24 @@ public class OrderSaga {
 			LOGGER.info("The Process Payment resulted in NULL. Initiating a compensating transaction.");
 		}
 				
+	}
+	
+	@SagaEventHandler(associationProperty = "orderId")
+	public void handle(PaymentProcessEvent paymentProcessEvent) {
+		
+		// Invoke - Send approve order command
+		ApproveOrderCommand approveOrderCommand = 
+				new ApproveOrderCommand(paymentProcessEvent.getOrderId());
+		
+		commandGateway.send(approveOrderCommand);
+	}
+	
+	@EndSaga
+	@SagaEventHandler(associationProperty = "orderId")
+	public void handle(OrderApprovedEvent orderApprovedEvent) {
+		
+		LOGGER.info("The Order is approved, Order Saga is completed with orderId " + orderApprovedEvent.getOrderId());
+		// SagaLifecycle.end();
 	}
 
 }
