@@ -9,6 +9,7 @@ import com.appsdeveloperblog.estore.OrdersService.core.data.OrderEntity;
 import com.appsdeveloperblog.estore.OrdersService.core.data.OrdersRepository;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderApprovedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
+import com.appsdeveloperblog.estore.OrdersService.core.event.OrderRejectedEvent;
 
 @Component
 @ProcessingGroup("order-group")
@@ -51,6 +52,25 @@ public class OrderEventsHandler {
 		orderEntity.setOrderStatus(event.getOrderStatus());
 		
 		System.out.println("Updating Order Approved event - Entity to H2 Database");
+		ordersRepository.save(orderEntity);
+	}
+	
+	@EventHandler
+	public void on(OrderRejectedEvent event) {
+		
+		OrderEntity orderEntity = new OrderEntity();
+		
+		// fetch the existing order
+		orderEntity = ordersRepository.findByOrderId(event.getOrderId());
+		
+		if(orderEntity == null) {
+			// TODO: Do something about it
+			return;
+		}
+		
+		orderEntity.setOrderStatus(event.getOrderStatus());
+		
+		System.out.println("Updating Order Rejected event - Entity to H2 Database");
 		ordersRepository.save(orderEntity);
 	}
 	

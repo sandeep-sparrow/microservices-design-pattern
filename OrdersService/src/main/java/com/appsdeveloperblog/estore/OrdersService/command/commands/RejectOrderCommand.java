@@ -7,9 +7,10 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ApproveOrderCommand {
+public class RejectOrderCommand {
 	
 	@TargetAggregateIdentifier
 	private final String orderId;
+	private final String reason;
 
 }

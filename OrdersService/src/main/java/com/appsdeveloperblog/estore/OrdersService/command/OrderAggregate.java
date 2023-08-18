@@ -8,9 +8,11 @@ import org.axonframework.spring.stereotype.Aggregate;
 import org.springframework.beans.BeanUtils;
 
 import com.appsdeveloperblog.estore.OrdersService.command.commands.ApproveOrderCommand;
+import com.appsdeveloperblog.estore.OrdersService.command.commands.RejectOrderCommand;
 import com.appsdeveloperblog.estore.OrdersService.core.data.OrderStatus;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderApprovedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
+import com.appsdeveloperblog.estore.OrdersService.core.event.OrderRejectedEvent;
 
 import lombok.Data;
 
@@ -57,6 +59,14 @@ public class OrderAggregate {
 		AggregateLifecycle.apply(orderApprovedEvent);
 	}
 	
+	@CommandHandler
+	public void handle(RejectOrderCommand rejectOrderCommand) {
+		
+		OrderRejectedEvent orderRejectedEvent = new OrderRejectedEvent(rejectOrderCommand.getOrderId());
+		
+		AggregateLifecycle.apply(orderRejectedEvent);
+	}
+	
 	@EventSourcingHandler
 	public void on(OrderCreatedEvent orderCreatedEvent) {
 		
@@ -72,5 +82,11 @@ public class OrderAggregate {
 	public void on(OrderApprovedEvent orderApprovedEvent) {
 		
 		this.orderStatus = orderApprovedEvent.getOrderStatus();
+	}
+	
+	@EventSourcingHandler
+	public void on(OrderRejectedEvent orderRejectedEvent) {
+		
+		this.orderStatus = orderRejectedEvent.getOrderStatus();
 	}
 }
