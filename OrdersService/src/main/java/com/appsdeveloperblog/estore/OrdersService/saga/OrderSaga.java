@@ -114,12 +114,14 @@ public class OrderSaga {
 			LOGGER.error(ex.getMessage());
 			// Start compensating transaction
 			cancelProductReservation(productReservedEvent, ex.getMessage());
+			return;
 		}
 	
 		if(result == null) {
 			// Start compensating transaction
 			cancelProductReservation(productReservedEvent, "Could not process user payment with provided payment details");
 			LOGGER.info("The Process Payment resulted in NULL. Initiating a compensating transaction.");
+			return;
 		}
 				
 	}
