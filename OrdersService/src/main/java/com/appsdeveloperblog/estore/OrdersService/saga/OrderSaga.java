@@ -1,5 +1,7 @@
 package com.appsdeveloperblog.estore.OrdersService.saga;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -7,6 +9,8 @@ import org.axonframework.commandhandling.CommandCallback;
 import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.CommandResultMessage;
 import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.deadline.DeadlineManager;
+import org.axonframework.deadline.annotation.DeadlineHandler;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.modelling.saga.EndSaga;
 import org.axonframework.modelling.saga.SagaEventHandler;
@@ -41,7 +45,14 @@ public class OrderSaga {
 	@Autowired
 	private transient QueryGateway queryGateway;
 	
+	@Autowired
+	private transient DeadlineManager deadlineManager;
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrderSaga.class);
+	
+	private final String PAYMENT_PROCESSING_TIMEOUT_DEADLINE = "payment-processing-deadline";
+	
+	private String scheduleId;
 	
 	@StartSaga
 	@SagaEventHandler(associationProperty = "orderId")
@@ -99,6 +110,10 @@ public class OrderSaga {
 		
 		LOGGER.info("Successfully fetched the user payment details for user " + userPaymenDetials.getFirstName());
 		
+		scheduleId = deadlineManager.schedule(Duration.of(120, ChronoUnit.SECONDS), PAYMENT_PROCESSING_TIMEOUT_DEADLINE, productReservedEvent);
+		
+		// TODO: remove in no test region
+		// if(true) return;
 		
 		ProcessPaymentCommand processPaymentCommand = ProcessPaymentCommand.builder()
 				.orderId(productReservedEvent.getOrderId())
@@ -129,6 +144,9 @@ public class OrderSaga {
 	@SagaEventHandler(associationProperty = "orderId")
 	public void handle(PaymentProcessEvent paymentProcessEvent) {
 		
+		// Cancel the deadline if the payment processing event is created
+		cancelDeadline();
+		
 		// Invoke - Send approve order command
 		ApproveOrderCommand approveOrderCommand = 
 				new ApproveOrderCommand(paymentProcessEvent.getOrderId());
@@ -136,11 +154,27 @@ public class OrderSaga {
 		commandGateway.send(approveOrderCommand);
 	}
 	
+	private void cancelDeadline() {
+		
+		if(scheduleId != null) {
+			deadlineManager.cancelSchedule(PAYMENT_PROCESSING_TIMEOUT_DEADLINE, scheduleId);
+			scheduleId = null;
+		}
+		
+	}
+	
 	@EndSaga
 	@SagaEventHandler(associationProperty = "orderId")
 	public void handle(OrderApprovedEvent orderApprovedEvent) {
 		
 		LOGGER.info("The Order is approved, Order Saga is completed with orderId " + orderApprovedEvent.getOrderId());
+	}
+	
+	@DeadlineHandler(deadlineName = PAYMENT_PROCESSING_TIMEOUT_DEADLINE)
+	public void handlePaymentDeadline(ProductReservedEvent productReservedEvent) {
+		
+		LOGGER.info("Payment processing deadline took place. Sending a compensating transaction for order Id: " + productReservedEvent.getOrderId());
+		cancelProductReservation(productReservedEvent, "Payment Timeout");
 	}
 	
 	@SagaEventHandler(associationProperty = "orderId")
@@ -156,11 +190,13 @@ public class OrderSaga {
 	@SagaEventHandler(associationProperty = "orderId")
 	public void handle(OrderRejectedEvent orderRejectedEvent) {
 		
-		LOGGER.info("The Order is approved, Order Saga is completed with orderId " + orderRejectedEvent.getOrderId());
+		LOGGER.info("The Order is rejected, Order Saga is completed with orderId " + orderRejectedEvent.getOrderId());
 		SagaLifecycle.end();
 	}
 	
 	private void cancelProductReservation(ProductReservedEvent productReservedEvent, String reason) {
+		
+		cancelDeadline();
 		
 		CancelProductReservationCommand cancelProductReservationCommand =
 				CancelProductReservationCommand.builder()
