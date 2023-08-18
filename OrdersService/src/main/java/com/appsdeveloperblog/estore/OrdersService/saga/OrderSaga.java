@@ -17,6 +17,7 @@ import org.axonframework.modelling.saga.SagaEventHandler;
 import org.axonframework.modelling.saga.SagaLifecycle;
 import org.axonframework.modelling.saga.StartSaga;
 import org.axonframework.queryhandling.QueryGateway;
+import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.axonframework.spring.stereotype.Saga;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ import com.appsdeveloperblog.estore.OrdersService.command.commands.RejectOrderCo
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderApprovedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderCreatedEvent;
 import com.appsdeveloperblog.estore.OrdersService.core.event.OrderRejectedEvent;
+import com.appsdeveloperblog.estore.OrdersService.query.FindOrderQuery;
+import com.appsdeveloperblog.estore.OrdersService.query.rest.OrderSummary;
 import com.appsdeveloperblog.estore.core.commands.CancelProductReservationCommand;
 import com.appsdeveloperblog.estore.core.commands.ProcessPaymentCommand;
 import com.appsdeveloperblog.estore.core.commands.ReserveProductCommand;
@@ -48,6 +51,9 @@ public class OrderSaga {
 	@Autowired
 	private transient DeadlineManager deadlineManager;
 	
+	@Autowired
+	private transient QueryUpdateEmitter queryUpdateEmitter;
+	
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrderSaga.class);
 	
 	private final String PAYMENT_PROCESSING_TIMEOUT_DEADLINE = "payment-processing-deadline";
@@ -56,13 +62,13 @@ public class OrderSaga {
 	
 	@StartSaga
 	@SagaEventHandler(associationProperty = "orderId")
-	public void handle(OrderCreatedEvent event) {
+	public void handle(OrderCreatedEvent orderCreatedEvent) {
 		
 		ReserveProductCommand reserveProductCommand = ReserveProductCommand.builder()
-				.orderId(event.getOrderId())
-				.productId(event.getProductId())
-				.quantity(event.getQuantity())
-				.userId(event.getUserId())
+				.orderId(orderCreatedEvent.getOrderId())
+				.productId(orderCreatedEvent.getProductId())
+				.quantity(orderCreatedEvent.getQuantity())
+				.userId(orderCreatedEvent.getUserId())
 				.build();
 		
 		LOGGER.info("OrderCreatedEvent handled for orderId: " + reserveProductCommand.getOrderId() + 
@@ -75,7 +81,11 @@ public class OrderSaga {
 					CommandResultMessage<? extends Object> commandResultMessage) {
 				if(commandResultMessage.isExceptional()) {
 					// start a compensating transaction
-					System.out.println(commandResultMessage.exceptionResult());
+					RejectOrderCommand rejectOrderCommand = 
+							new RejectOrderCommand(orderCreatedEvent.getOrderId(),
+									commandResultMessage.exceptionResult().getMessage());
+					
+					commandGateway.send(rejectOrderCommand);
 				}
 			}
 		});
@@ -168,6 +178,10 @@ public class OrderSaga {
 	public void handle(OrderApprovedEvent orderApprovedEvent) {
 		
 		LOGGER.info("The Order is approved, Order Saga is completed with orderId " + orderApprovedEvent.getOrderId());
+		queryUpdateEmitter.emit(FindOrderQuery.class, query -> true, 
+				new OrderSummary(orderApprovedEvent.getOrderId(), 
+						orderApprovedEvent.getOrderStatus(),
+						""));
 	}
 	
 	@DeadlineHandler(deadlineName = PAYMENT_PROCESSING_TIMEOUT_DEADLINE)
@@ -191,6 +205,11 @@ public class OrderSaga {
 	public void handle(OrderRejectedEvent orderRejectedEvent) {
 		
 		LOGGER.info("The Order is rejected, Order Saga is completed with orderId " + orderRejectedEvent.getOrderId());
+		queryUpdateEmitter.emit(FindOrderQuery.class, query -> true, 
+				new OrderSummary(orderRejectedEvent.getOrderId(), 
+						orderRejectedEvent.getOrderStatus(),
+						orderRejectedEvent.getReason()));
+		
 		SagaLifecycle.end();
 	}
 	
