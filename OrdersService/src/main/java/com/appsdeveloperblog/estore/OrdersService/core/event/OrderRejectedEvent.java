@@ -10,6 +10,7 @@ import lombok.Value;
 public class OrderRejectedEvent {
 	
 	public final String orderId;
+	public final String reason;
 	private final OrderStatus orderStatus = OrderStatus.REJECTED;
 
 }
